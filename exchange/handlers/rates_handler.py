@@ -11,6 +11,7 @@ rates_handler = Router()
 async def command_rates_handler(message: Message):
     redis_client = connect_to_redis()
     currencies = read_redis(redis_client)
+    redis_client.close()
 
     if currencies is None:
         response_text = '<b>The service is temporarily unavailable. Try it later</b>'

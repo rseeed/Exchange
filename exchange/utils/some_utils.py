@@ -1,5 +1,6 @@
-import aiohttp
 import asyncio
+
+import aiohttp
 import logging
 import redis
 import xml.etree.ElementTree as xmlET
@@ -51,8 +52,8 @@ def connect_to_redis(host='localhost', port=6379):
 
 def pull_redis(redis_client: redis.client.Redis, name, value):
     try:
-        redis_client.set(name, value)
-        logger.info(f'Для ключа "{name}" успешно установлено значение "{value}"')
+        redis_client.set(name, float(value.replace(',', '.')))
+        logger.info(f'Для ключа "{name}" успешно установлено значение "{float(value.replace(",", "."))}"')
     except Exception as e:
         logger.error(f'Ошибка установки значения для ключа "{name}": {e}')
 
@@ -74,26 +75,27 @@ def read_redis(redis_client: redis.client.Redis, currency_1: str = None, currenc
     else:
         try:
             value_1, value_2 = redis_client.get(currency_1), redis_client.get(currency_2)
-            if value_1 is not None and value_2 is not None:
+            if value_1 is not None and currency_2 == 'RUB':
+                return value_1, 1.0
+            elif value_2 is not None and currency_1 == 'RUB':
+                return 1.0, value_2
+            elif currency_1 == 'RUB' and currency_2 == 'RUB':
+                return 1.0, 1.0
+            elif value_1 is not None and value_2 is not None:
                 return value_1, value_2
             else:
                 logger.info(f'Было запрошено значение "{currency_1}, {currency_2}", которое отсутствует в Redis')
-                return None
+                return None, None
         except Exception as e:
             logger.error(f'Ошибка чтения данных в Redis: {e}')
-            return None
+            return None, None
 
 
-async def main():
-    content = await fetch()
-    if content:
-        currencies = await read_fetch(content)
-        redis_client = connect_to_redis()
-        if redis_client:
-            for currency in currencies:
-                pull_redis(redis_client, currency[0], currency[1])
-            data = read_redis(redis_client)
-            print(data)
-
-            redis_client.close()
-            logger.info('Подключение к Redis закрыто')
+def convert_currency(currency_1: str, rate_1: float, currency_2: str, rate_2: float, amount: float):
+    if currency_1 == 'RUB':
+        return amount / rate_2
+    elif currency_2 == 'RUB':
+        return amount * rate_1
+    else:
+        convert_1 = convert_currency(currency_1, rate_1, 'RUB', rate_2, amount)
+        return convert_currency('RUB', rate_1, currency_2, rate_2, convert_1)
