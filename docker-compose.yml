@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  bot:
+    build: .
+    container_name: exchange_telegram
+    volumes:
+      - .:/app
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"

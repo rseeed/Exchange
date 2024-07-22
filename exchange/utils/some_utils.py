@@ -1,6 +1,7 @@
 import aiohttp
 import logging
 import redis
+import os
 import xml.etree.ElementTree as xmlET
 
 logging.basicConfig(level=logging.INFO,
@@ -8,6 +9,9 @@ logging.basicConfig(level=logging.INFO,
                     handlers=[logging.FileHandler('some_utils.log'),
                               logging.StreamHandler()])
 logger = logging.getLogger(__name__)
+
+REDIS_HOST = os.getenv('REDIS_HOST', 'redis')
+REDIS_PORT = int(os.getenv('REDIS_PORT', 6379))
 
 
 async def fetch(url='https://cbr.ru/scripts/XML_daily.asp'):
@@ -31,11 +35,11 @@ async def read_fetch(content: str):
     return currencies
 
 
-def connect_to_redis(host='localhost', port=6379):
+def connect_to_redis():
     try:
         redis_client = redis.StrictRedis(
-            host=host,
-            port=port,
+            host=REDIS_HOST,
+            port=REDIS_PORT,
             decode_responses=True
         )
 
