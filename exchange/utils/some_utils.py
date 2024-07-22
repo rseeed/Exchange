@@ -57,19 +57,31 @@ def pull_redis(redis_client: redis.client.Redis, name, value):
         logger.error(f'Ошибка установки значения для ключа "{name}": {e}')
 
 
-def read_redis(redis_client: redis.client.Redis):
-    try:
-        cursor = '0'
-        all_data = {}
-        while cursor != 0:
-            cursor, keys = redis_client.scan(cursor=cursor, match='*', count=100)
-            for key in keys:
-                value = redis_client.get(key)
-                all_data[key] = value
-        return all_data
-    except Exception as e:
-        logger.error(f'Ошибка чтения данных в Redis: {e}')
-        return None
+def read_redis(redis_client: redis.client.Redis, currency_1: str = None, currency_2: str = None):
+    if currency_1 is None or currency_2 is None:
+        try:
+            cursor = '0'
+            all_data = {}
+            while cursor != 0:
+                cursor, keys = redis_client.scan(cursor=cursor, match='*', count=100)
+                for key in keys:
+                    value = redis_client.get(key)
+                    all_data[key] = value
+            return all_data
+        except Exception as e:
+            logger.error(f'Ошибка чтения данных в Redis: {e}')
+            return None
+    else:
+        try:
+            value_1, value_2 = redis_client.get(currency_1), redis_client.get(currency_2)
+            if value_1 is not None and value_2 is not None:
+                return value_1, value_2
+            else:
+                logger.info(f'Было запрошено значение "{currency_1}, {currency_2}", которое отсутствует в Redis')
+                return None
+        except Exception as e:
+            logger.error(f'Ошибка чтения данных в Redis: {e}')
+            return None
 
 
 async def main():
