@@ -1,5 +1,3 @@
-import asyncio
-
 import aiohttp
 import logging
 import redis
@@ -56,6 +54,19 @@ def pull_redis(redis_client: redis.client.Redis, name, value):
         logger.info(f'Для ключа "{name}" успешно установлено значение "{float(value.replace(",", "."))}"')
     except Exception as e:
         logger.error(f'Ошибка установки значения для ключа "{name}": {e}')
+
+
+async def update_currency_rates():
+    logger.info(f'Пошло обновление данных Redis')
+    content = await fetch()
+    if content:
+        currencies = await read_fetch(content)
+        redis_client = connect_to_redis()
+        if redis_client:
+            for name, value in currencies:
+                pull_redis(redis_client, name, value)
+            redis_client.close()
+            logger.info(f'Подключение к Redis закрыто')
 
 
 def read_redis(redis_client: redis.client.Redis, currency_1: str = None, currency_2: str = None):
