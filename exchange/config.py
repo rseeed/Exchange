@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import os
 
 
 @dataclass
@@ -9,5 +8,5 @@ class Config:
 
 def load_config() -> Config:
     return Config(
-        bot_token=os.getenv('BOT_TOKEN')
+        bot_token='7169258886:AAE9J0St_A1M-sATsRhBZTWC5IUi6wgkh1Y'
     )
